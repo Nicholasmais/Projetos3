@@ -14,7 +14,7 @@ config.read('credentials.ini')
 
 db = mysql.connector.connect(
   host=config['credentials']['host'],
-  user=config['credentials']["root"],
+  user=config['credentials']["user"],
   password=config['credentials']['password'],
   database=config['credentials']['database']
 )
@@ -28,6 +28,7 @@ placas_cadastradas = {placa:{'nome':nome, 'codigo':codigo} for codigo, nome, pla
 passagem_dict = {0:"entrada",1:"saida"}
 print(placas_cadastradas)
 
+#https://github.com/UB-Mannheim/tesseract/wiki
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 capture = cv2.VideoCapture(0)
 
