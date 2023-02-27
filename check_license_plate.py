@@ -20,11 +20,11 @@ db = mysql.connector.connect(
 )
  
 cursor = db.cursor()
-query = "SELECT * FROM perfil_cadastrados"
+query = "SELECT * FROM placas_cadastradas"
 cursor.execute(query)
 res = cursor.fetchall()
 
-placas_cadastradas = {placa:{'nome':nome, 'codigo':codigo} for codigo, nome, placa in res}
+placas_cadastradas = {placa:{'nome':responsavel, 'codigo':codigo} for codigo, placa, responsavel in res}
 passagem_dict = {0:"entrada",1:"saida"}
 print(placas_cadastradas)
 
@@ -74,8 +74,8 @@ while True:
       text = pytesseract.image_to_string(cropped_image).strip()
       #Exibe o texto associado ao retângulo
       cv2.putText(color_gray_frame, text, (x, y + 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor, 2)
-  
-      if texto in placas_cadastradas:     
+
+      if text in placas_cadastradas:     
         t = time.localtime()
         data_passagem = time.strftime("%Y-%m-%d", t)
         horario_passagem = time.strftime("%H:%M:%S", t)
@@ -83,12 +83,16 @@ while True:
 
         print(f"{placas_cadastradas[text]['nome']} permitida a {passagem_dict[passagem]}.")
 
-        sql = "insert into logs(nome, placa, data_passagem, horario_passagem, passagem) values(%s,%s,%s,%s,%s)"
-        val = (placas_cadastradas[text]['nome'], text, data_passagem, horario_passagem, passagem_dict[passagem])
+        sql = "insert into logs(codigo_veiculo, data_passagem, horario_passagem, passagem) values(%s,%s,%s,%s)"
+        val = (int(placas_cadastradas[text]['codigo']),data_passagem, horario_passagem, passagem_dict[passagem])
         cursor.execute(sql, val)
         print("cadastrado")
 
-        time.sleep(5)
+        for tempo in (range(3,0,-1)):
+          cv2.rectangle(color_gray_frame, (0, 0), (100, 40), (0,0,0), -1)
+          cv2.putText(color_gray_frame, f"Aguarde {tempo}s", (0,25), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 1)
+          cv2.imshow("Camera2", color_gray_frame)          
+          cv2.waitKey(1000)
 
   cv2.imshow("Camera2", color_gray_frame)
 
