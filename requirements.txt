@@ -1,0 +1,3 @@
+pytesseract
+mysql-connector-python
+opencv-python
