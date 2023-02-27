@@ -13,7 +13,7 @@ config = configparser.ConfigParser()
 config.read('credentials.ini')
 
 db = mysql.connector.connect(
-  host=config['credendftials']['host'],
+  host=config['credendtials']['host'],
   user=config['credentials']["user"],
   password=config['credentials']['password'],
   database=config['credentials']['database']
