@@ -1,13 +1,12 @@
+import random
+import time
+import configparser
 import os
 os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = '0' #webcam externa. Deve vir antes do import cv2
 
 import cv2
 import pytesseract
-import random
-
-import time
 import mysql.connector
-import configparser
 
 config = configparser.ConfigParser()
 config.read('credentials.ini')
