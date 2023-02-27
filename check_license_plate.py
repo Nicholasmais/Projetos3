@@ -86,6 +86,7 @@ while True:
         sql = "insert into logs(codigo_veiculo, data_passagem, horario_passagem, passagem) values(%s,%s,%s,%s)"
         val = (int(placas_cadastradas[text]['codigo']),data_passagem, horario_passagem, passagem_dict[passagem])
         cursor.execute(sql, val)
+        db.commit()
         print("cadastrado")
 
         for tempo in (range(3,0,-1)):
@@ -99,7 +100,6 @@ while True:
   if cv2.waitKey(1) & 0xFF == ord('q'):    
     break
 
-db.commit()
 db.close()
 
 capture.release()
