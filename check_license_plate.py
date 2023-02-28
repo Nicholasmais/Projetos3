@@ -36,7 +36,6 @@ plate_ratio = 150/60
 
 while True:
   ret, frame = capture.read()
-  color_frame = frame.copy()
 
   gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
