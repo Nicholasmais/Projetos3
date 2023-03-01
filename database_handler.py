@@ -11,7 +11,8 @@ class DatabaseHandler():
             user=config['credentials']["user"],
             password=config['credentials']['password'],
             database=config['credentials']['database']
-        )        
+        )
+        self.tipo_pessoa = {"morador":"Morador","responsavel":"Responsável"}
         
     def select(self, query):    
         cursor = self.db.cursor()
@@ -78,22 +79,27 @@ class DatabaseHandler():
             pessoas[row[1]] = {"apartamento":row[2], "data_nascimento":datetime.strptime(str(row[3]), "%Y-%m-%d").strftime('%d/%m/%Y'), "tipo_pessoa":row[4]}
         return pessoas
 
-    def update_apartament(self, apto, responsavel):
-        query = f"SELECT nome, codigo from pessoas"
-        cursor = self.db.cursor()
-        cursor.execute(query)
-        res = cursor.fetchall()
-        responsvael_nome = {responsavel:codigo for responsavel,codigo in res}
-     
+    def update_apartament(self, apto, responsavel):     
         query = 'update apartamento set responsavel = %s where apartamento = %s'
-        parameters = (responsvael_nome[responsavel], apto)
+        parameters = (responsavel, apto)
         cursor = self.db.cursor()
         cursor.execute(query, parameters)
    
         self.db.commit()
+        print("Apartamento atualizado")
 
-    def create_pessoa(self, *args):
+    def create_pessoa(self, tkinter_table, pessoa_dados):
         query = 'insert into pessoas(nome, apartamento, data_nascimento, tipo_pessoa) values (%s, %s, %s, %s)'
-        val = args
+        val = pessoa_dados
+        
         self.insert(query, val)
+        
+        tkinter_table.insert(parent='', index='end', iid=id, values=(pessoa_dados[0], pessoa_dados[1], pessoa_dados[2], self.tipo_pessoa[pessoa_dados[3]]))
+
+        if pessoa_dados[3] == 'morador':
+          query = 'select codigo from pessoas order by codigo desc limit 1'
+          cursor = self.db.cursor()
+          cursor.execute(query)
+          res = cursor.fetchall()[0][0]
+          self.update_apartament(pessoa_dados[1], res)
         return None

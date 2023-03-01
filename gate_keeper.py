@@ -104,7 +104,7 @@ for id,(apto, apto_info) in enumerate(table_rows.items()):
     else:
         table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
 
-apartaments = [1,2,3,4,5,6,7,8,9,10]
+apartaments = [0, 1,2,3,4,5,6,7,8,9,10]
 apartament_selected = tk.StringVar()
 apartament_selected.set(apartaments[0])
 apartaments_dropdownbox = ttk.Combobox(frame_bottom_right_left_bottom,
@@ -114,6 +114,7 @@ apartaments_dropdownbox = ttk.Combobox(frame_bottom_right_left_bottom,
 apartaments_dropdownbox.place(relx=.15,rely=0)
 apartaments_dropdownbox.update()
 
+tipo_pessoa = {"morador":"Morador","responsavel":"Responsável"}
 pessoas = ["Nícholas","Vinícius","Henry"]
 pessoa_selected = tk.StringVar()
 pessoa_selected.set(pessoas[0])
@@ -148,7 +149,7 @@ table_pessoas.place(relx = 0, rely = 0, relheight=1, relwidth=1)
 table_pessoas_rows = database.get_pessoas_columns()
 
 for id,(pessoa, pessoa_info) in enumerate(table_pessoas_rows.items()):   
-    table_pessoas.insert(parent='', index='end', iid=id, values=(pessoa, pessoa_info['apartamento'], pessoa_info['data_nascimento'], pessoa_info['tipo_pessoa']))
+    table_pessoas.insert(parent='', index='end', iid=id, values=(pessoa, pessoa_info['apartamento'], pessoa_info['data_nascimento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
 
 nome_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="Nome")
 nome_pessoa_label.place(relx=0, rely=0, relwidth=0.2, relheight=0.15)
@@ -173,18 +174,18 @@ nascimento.place(relx=0.7, rely=0, relwidth=.3, relheight=0.15)
 
 tipo_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="Status")
 tipo_pessoa_label.place(relx=.5, rely=.15, relwidth=0.2, relheight=0.15)
-tipo_pessoa = ["Morador","Responsável"]
+
 pessoa_selected = tk.StringVar()
-pessoa_selected.set(tipo_pessoa[0])
+pessoa_selected.set(list(tipo_pessoa.values())[0])
 tipo_pessoa_dropdownbox = ttk.Combobox(frame_bottom_right_right_bottom,
                                          textvariable= pessoa_selected,
-                                         values=tipo_pessoa,
+                                         values=list(tipo_pessoa.values()),
                                          state="readonly")
 tipo_pessoa_dropdownbox.place(relx=.7, rely=.15, relwidth=.3, relheight=0.15)
 tipo_pessoa_dropdownbox.update()
 
 create_pessoa = tk.Button(frame_bottom_right_right_bottom, text="Cadastrar pessoa",
-                              command=lambda:database.create_pessoa(nome_pessoa.get(), apartament_pessoa_selected.get(), nascimento.get_date(), pessoa_selected.get()  ))
+                              command=lambda:database.create_pessoa(table_pessoas, (nome_pessoa.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get())) ))
 create_pessoa.place(relx=.25, rely=.6, relwidth=.5, relheight=0.15)
 create_pessoa.update()
 
