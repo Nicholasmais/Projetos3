@@ -10,7 +10,7 @@ class Camera():
         self.label = label
 
         res = self.database.select("SELECT * FROM placas_cadastradas")
-        self.placas_cadastradas = {placa:{'nome':responsavel, 'codigo':codigo} for codigo, placa, responsavel in res}
+        self.placas_cadastradas = {placa:{'responsavel':responsavel, 'codigo':codigo} for codigo, placa, responsavel in res}
         self.passagem_dict = {0:"entrada",1:"saida"}
 
         #https://github.com/UB-Mannheim/tesseract/wiki
