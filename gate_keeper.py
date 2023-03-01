@@ -69,7 +69,7 @@ button.place(relx=0.5, rely=0.2, relwidth=0.4, relheight=0.1)
 table = ttk.Treeview(frame_table)
 table['columns'] = ("apartamento", "responsavel", "placa")
 
-table.column("#0", width = 0, stretch="NO")
+table.column("#0", width = 0)
 table.column("apartamento", anchor="w", stretch=1)
 table.column("responsavel", anchor="w", stretch=1)
 table.column("placa", anchor="w", stretch=1)
@@ -82,9 +82,14 @@ table.place(relx = 0, rely = .0125, relheight=1, relwidth=1)
 table_rows = database.get_table_columns()
 print(table_rows)
 for id,(apto, apto_info) in enumerate(table_rows.items()):
-    table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
-    pass
-print(database.get_table_columns())
+    if len(apto_info['moradores']) > 1:
+        table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
+        for id2,morador in enumerate(apto_info['moradores']):
+            if morador != apto_info['responsavel']:
+                table.insert(parent=id, index='end', iid=f"c{id2}", values=('', morador, ''))
+    else:
+        table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
+
 janela.minsize(janela_height, janel_width)
 janela.mainloop()
 database.close()
