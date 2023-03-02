@@ -87,6 +87,7 @@ class DatabaseHandler():
         with self.db.cursor() as cursor:
             cursor.execute(query, parameters)        
             self.db.commit()
+        print()
         table.item(int(apto)-1, text='', values=(apto, self.pessoas_codigo[responsavel], self.pessoas_placa[str(responsavel)]))
      
     def create_pessoa(self, tkinter_table,tkinter_apartament_table, pessoa_dados):
@@ -94,6 +95,7 @@ class DatabaseHandler():
 
         val = pessoa_dados
         self.insert(query, val[:-1])
+        self.pessoas_codigo = self.get_pessoas()
 
         query = 'select codigo from pessoas order by codigo desc limit 1;'
         codigo_pessoa_nova = self.select(query)[0][0]
@@ -104,12 +106,14 @@ class DatabaseHandler():
           query = 'insert into placas_cadastradas(placa, responsavel) values (%s, %s)'
           val = [val[-1], codigo_pessoa_nova]
           self.insert(query, val)
-          
+          self.pessoas_placa = self.get_placa_responsavel()
+
           query = 'select codigo from pessoas order by codigo desc limit 1'
           cursor = self.db.cursor()
           cursor.execute(query)
           res = cursor.fetchall()[0][0]
-          self.update_apartament(pessoa_dados[1], res)
+  
+          self.update_apartament(tkinter_apartament_table, pessoa_dados[1], res)
           tkinter_apartament_table.item(int(pessoa_dados[1])-1, text='', values=(pessoa_dados[1], pessoa_dados[0], pessoa_dados[-1]))
 
     def get_responsaveis(self):

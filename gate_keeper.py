@@ -181,6 +181,7 @@ tipo_pessoa_dropdownbox = ttk.Combobox(frame_bottom_right_right_bottom,
                                          textvariable= pessoa_selected,
                                          values=list(tipo_pessoa.values()),
                                          state="readonly")
+
 def select_tipo_pessoa(event):
     selected = event.widget.get()
     if selected == "Responsável":
