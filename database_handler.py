@@ -13,7 +13,9 @@ class DatabaseHandler():
             database=config['credentials']['database']
         )
         self.tipo_pessoa = {"morador":"Morador","responsavel":"Responsável"}
-        
+        self.pessoas_codigo = self.get_pessoas()
+        self.pessoas_placa = self.get_placa_responsavel()
+
     def select(self, query):    
         cursor = self.db.cursor()
         cursor.execute(query)
@@ -27,11 +29,9 @@ class DatabaseHandler():
         cursor = self.db.cursor()
         cursor.execute(query, parameters)
         self.db.commit()
-        return None
 
     def close(self):
         self.db.close()
-        return None
     
     def get_columns(self, table):        
         query = f"SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='condominio' AND `TABLE_NAME`='{table}'"
@@ -79,27 +79,50 @@ class DatabaseHandler():
             pessoas[row[1]] = {"apartamento":row[2], "data_nascimento":datetime.strptime(str(row[3]), "%Y-%m-%d").strftime('%d/%m/%Y'), "tipo_pessoa":row[4]}
         return pessoas
 
-    def update_apartament(self, apto, responsavel):     
+    def update_apartament(self,table,  apto, responsavel):
+        if not apto or not responsavel:
+            return None
         query = 'update apartamento set responsavel = %s where apartamento = %s'
         parameters = (responsavel, apto)
-        cursor = self.db.cursor()
-        cursor.execute(query, parameters)
-   
-        self.db.commit()
-        print("Apartamento atualizado")
-
-    def create_pessoa(self, tkinter_table, pessoa_dados):
+        with self.db.cursor() as cursor:
+            cursor.execute(query, parameters)        
+            self.db.commit()
+        table.item(int(apto)-1, text='', values=(apto, self.pessoas_codigo[responsavel], self.pessoas_placa[str(responsavel)]))
+     
+    def create_pessoa(self, tkinter_table,tkinter_apartament_table, pessoa_dados):
         query = 'insert into pessoas(nome, apartamento, data_nascimento, tipo_pessoa) values (%s, %s, %s, %s)'
-        val = pessoa_dados
-        
-        self.insert(query, val)
-        
-        tkinter_table.insert(parent='', index='end', iid=id, values=(pessoa_dados[0], pessoa_dados[1], pessoa_dados[2], self.tipo_pessoa[pessoa_dados[3]]))
 
-        if pessoa_dados[3] == 'morador':
+        val = pessoa_dados
+        self.insert(query, val[:-1])
+
+        query = 'select codigo from pessoas order by codigo desc limit 1;'
+        codigo_pessoa_nova = self.select(query)[0][0]
+        
+        tkinter_table.insert(parent='', index='end', iid=id, values=(pessoa_dados[0], pessoa_dados[1], datetime.strptime(str(pessoa_dados[2]), "%Y-%m-%d").strftime('%d/%m/%Y'), self.tipo_pessoa[pessoa_dados[3]]))
+        
+        if pessoa_dados[3] == 'responsavel':
+          query = 'insert into placas_cadastradas(placa, responsavel) values (%s, %s)'
+          val = [val[-1], codigo_pessoa_nova]
+          self.insert(query, val)
+          
           query = 'select codigo from pessoas order by codigo desc limit 1'
           cursor = self.db.cursor()
           cursor.execute(query)
           res = cursor.fetchall()[0][0]
           self.update_apartament(pessoa_dados[1], res)
-        return None
+          tkinter_apartament_table.item(int(pessoa_dados[1])-1, text='', values=(pessoa_dados[1], pessoa_dados[0], pessoa_dados[-1]))
+
+    def get_responsaveis(self):
+        query = "SELECT nome,codigo from pessoas where tipo_pessoa = 'responsavel'"        
+        responsaveis = {responsavel[0]:responsavel[1] for responsavel in self.select(query)}
+        return responsaveis
+    
+    def get_pessoas(self):
+        query = "SELECT codigo, nome from pessoas"        
+        responsaveis = {responsavel[0]:responsavel[1] for responsavel in self.select(query)}
+        return responsaveis
+
+    def get_placa_responsavel(self):
+        query = "SELECT responsavel, placa from placas_cadastradas"        
+        palcas = {row[0]:row[1] for row in self.select(query)}
+        return palcas

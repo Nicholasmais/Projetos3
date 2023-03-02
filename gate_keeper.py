@@ -114,19 +114,19 @@ apartaments_dropdownbox = ttk.Combobox(frame_bottom_right_left_bottom,
 apartaments_dropdownbox.place(relx=.15,rely=0)
 apartaments_dropdownbox.update()
 
+pessoas = database.get_responsaveis()
+pessoa_responsavel_selected = tk.StringVar()
+pessoa_responsavel_selected.set(list(pessoas.keys())[0])
 tipo_pessoa = {"morador":"Morador","responsavel":"Responsável"}
-pessoas = ["Nícholas","Vinícius","Henry"]
-pessoa_selected = tk.StringVar()
-pessoa_selected.set(pessoas[0])
 pessoas_dropdownbox = ttk.Combobox(frame_bottom_right_left_bottom,
-                                         textvariable= pessoa_selected,
-                                         values=pessoas,
+                                         textvariable= pessoa_responsavel_selected,
+                                         values=list(pessoas.keys()),
                                          state="readonly")
 pessoas_dropdownbox.place(relx=.55, rely=0)
 pessoas_dropdownbox.update()
 
 update_apartament = tk.Button(frame_bottom_right_left_bottom, text="Atualizar apartamento",
-                              command=lambda:database.update_apartament(apartament_selected.get(),pessoa_selected.get()))
+                              command=lambda:database.update_apartament(table, apartament_selected.get(),pessoas[pessoa_responsavel_selected.get()]))
 update_apartament.place(relx=.35, rely=pessoas_dropdownbox.winfo_height()/frame_bottom_right_left_bottom.winfo_height(),
                         width=pessoas_dropdownbox.winfo_width())
 update_apartament.update()
@@ -181,11 +181,24 @@ tipo_pessoa_dropdownbox = ttk.Combobox(frame_bottom_right_right_bottom,
                                          textvariable= pessoa_selected,
                                          values=list(tipo_pessoa.values()),
                                          state="readonly")
+def select_tipo_pessoa(event):
+    selected = event.widget.get()
+    if selected == "Responsável":
+        placa_label.place(relx=.5, rely=.3, relwidth=.2, relheight=0.15)
+        placa_entry.place(relx=.7, rely=.3, relwidth=.3, relheight=0.15)
+    else:
+        placa_label.place_forget()
+        placa_entry.place_forget()
+
+placa_label = tk.Label(frame_bottom_right_right_bottom, text="Placa")
+placa_entry = tk.Entry(frame_bottom_right_right_bottom)
+
+tipo_pessoa_dropdownbox.bind("<<ComboboxSelected>>",select_tipo_pessoa)
 tipo_pessoa_dropdownbox.place(relx=.7, rely=.15, relwidth=.3, relheight=0.15)
 tipo_pessoa_dropdownbox.update()
 
 create_pessoa = tk.Button(frame_bottom_right_right_bottom, text="Cadastrar pessoa",
-                              command=lambda:database.create_pessoa(table_pessoas, (nome_pessoa.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get())) ))
+                              command=lambda:database.create_pessoa(table_pessoas,table, (nome_pessoa.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get()), placa_entry.get()) ))
 create_pessoa.place(relx=.25, rely=.6, relwidth=.5, relheight=0.15)
 create_pessoa.update()
 
