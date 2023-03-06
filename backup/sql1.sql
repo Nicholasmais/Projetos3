@@ -9,6 +9,9 @@ create table pessoas(
 select apartamento.apartamento, pessoas.nome from apartamento inner join pessoas on apartamento.codigo = pessoas.apartamento;
 update apartamento set apartamento = 5 where codigo = 5;
 select apartamento.apartamento, pessoas.nome from apartamento left join pessoas on apartamento.codigo = pessoas.apartamento;
+delete from pessoas where codigo > 3;
+delete from placas_cadastradas where codigo > 2;
+update apartamento set responsavel = null where codigo = 6;
 select * from pessoas;
 select * from placas_cadastradas;
 select * from apartamento;

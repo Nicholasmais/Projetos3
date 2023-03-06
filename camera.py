@@ -17,7 +17,7 @@ class Camera():
         pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
         self.capture = cv2.VideoCapture(0)
 
-        self.min_width, self.max_width = 80, 250
+        self.min_width, self.max_width = 40, 650
         self.plate_ratio = 150/60
 
     def show_frame(self):
@@ -36,8 +36,8 @@ class Camera():
             if len(approx) == 4:
                 x, y, w, h = cv2.boundingRect(approx)
                 aspect_ratio = float(w) / h        
-                if (self.min_width < w and w < self.max_width) and (self.plate_ratio*.9 < aspect_ratio < self.plate_ratio*1.1):  # adiciona apenas retângulos que são menores que os tamanhos máximos especificados
-                    rectangles.append(approx)
+                if (self.min_width < w < self.max_width) :#and (self.plate_ratio*.1 < aspect_ratio < self.plate_ratio*1.9):  # adiciona apenas retângulos que são menores que os tamanhos máximos especificados
+                  rectangles.append(approx)
         
         cores = [(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)) for _ in rectangles]
         
@@ -53,7 +53,7 @@ class Camera():
             # Insere o texto correspondente a cada retângulo
             texto = f"Retangulo {i+1} width = {w} height = {h}"
             cv2.putText(color_gray_frame, texto, (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor, 2)
-
+            continue
             cropped_image = color_gray_frame[y:y+h, x:x+w]
             text = pytesseract.image_to_string(cropped_image).strip()
             #Exibe o texto associado ao retângulo

@@ -114,6 +114,10 @@ apartaments_dropdownbox = ttk.Combobox(frame_bottom_right_left_bottom,
 apartaments_dropdownbox.place(relx=.15,rely=0)
 apartaments_dropdownbox.update()
 
+table_pessoas = ttk.Treeview(frame_bottom_right_right_top)
+table_pessoas['columns'] = ("nome", "apartamento", "data_nascimento", "status_morador")
+table_pessoas['show'] = 'headings'
+
 pessoas = database.get_responsaveis()
 pessoa_responsavel_selected = tk.StringVar()
 pessoa_responsavel_selected.set(list(pessoas.keys())[0])
@@ -124,16 +128,6 @@ pessoas_dropdownbox = ttk.Combobox(frame_bottom_right_left_bottom,
                                          state="readonly")
 pessoas_dropdownbox.place(relx=.55, rely=0)
 pessoas_dropdownbox.update()
-
-update_apartament = tk.Button(frame_bottom_right_left_bottom, text="Atualizar apartamento",
-                              command=lambda:database.update_apartament(table, apartament_selected.get(),pessoas[pessoa_responsavel_selected.get()]))
-update_apartament.place(relx=.35, rely=pessoas_dropdownbox.winfo_height()/frame_bottom_right_left_bottom.winfo_height(),
-                        width=pessoas_dropdownbox.winfo_width())
-update_apartament.update()
-
-table_pessoas = ttk.Treeview(frame_bottom_right_right_top)
-table_pessoas['columns'] = ("nome", "apartamento", "data_nascimento", "status_morador")
-table_pessoas['show'] = 'headings'
 
 table_pessoas.column("nome", anchor="w", stretch=0, width = int(frame_bottom_right_left_top.winfo_width()*5/18))
 table_pessoas.column("apartamento", anchor="w", stretch=0, width = int(frame_bottom_right_left_top.winfo_width()*1/6))
@@ -150,6 +144,37 @@ table_pessoas_rows = database.get_pessoas_columns()
 
 for id,(pessoa, pessoa_info) in enumerate(table_pessoas_rows.items()):   
     table_pessoas.insert(parent='', index='end', iid=id, values=(pessoa, pessoa_info['apartamento'], pessoa_info['data_nascimento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
+
+def refresh_tables():
+    #Tabela apartamentos
+    table.delete(*table.get_children())
+    table_rows = database.get_table_columns()    
+    for id,(apto, apto_info) in enumerate(table_rows.items()):
+        if len(apto_info['moradores']) > 1:
+            table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
+            for id2,morador in enumerate(apto_info['moradores']):
+                if morador != apto_info['responsavel']:
+                    table.insert(parent=id, index='end', iid=f"c{id2}", values=('', morador, ''))
+        else:
+            table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
+    pessoas_dropdownbox_new = database.get_responsaveis()
+    pessoas_dropdownbox['values'] = list(pessoas_dropdownbox_new.keys())
+
+    #Tabela pessoas
+    table_pessoas.delete(*table_pessoas.get_children())
+    table_pessoas_rows = database.get_pessoas_columns()
+    for id,(pessoa, pessoa_info) in enumerate(table_pessoas_rows.items()):   
+        table_pessoas.insert(parent='', index='end', iid=id, values=(pessoa, pessoa_info['apartamento'], pessoa_info['data_nascimento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
+
+def update_apartament():
+    database.update_apartament(apartament_selected.get(),pessoas[pessoa_responsavel_selected.get()])
+    refresh_tables()
+
+update_apartament_button = tk.Button(frame_bottom_right_left_bottom, text="Atualizar apartamento",
+                              command=update_apartament)
+update_apartament_button.place(relx=.35, rely=pessoas_dropdownbox.winfo_height()/frame_bottom_right_left_bottom.winfo_height(),
+                        width=pessoas_dropdownbox.winfo_width())
+update_apartament_button.update()
 
 nome_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="Nome")
 nome_pessoa_label.place(relx=0, rely=0, relwidth=0.2, relheight=0.15)
@@ -198,10 +223,14 @@ tipo_pessoa_dropdownbox.bind("<<ComboboxSelected>>",select_tipo_pessoa)
 tipo_pessoa_dropdownbox.place(relx=.7, rely=.15, relwidth=.3, relheight=0.15)
 tipo_pessoa_dropdownbox.update()
 
-create_pessoa = tk.Button(frame_bottom_right_right_bottom, text="Cadastrar pessoa",
-                              command=lambda:database.create_pessoa(table_pessoas,table, (nome_pessoa.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get()), placa_entry.get()) ))
-create_pessoa.place(relx=.25, rely=.6, relwidth=.5, relheight=0.15)
-create_pessoa.update()
+def create_pessoa():
+    database.create_pessoa((nome_pessoa.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get()), placa_entry.get()) )
+    refresh_tables()
+
+create_pessoa_button = tk.Button(frame_bottom_right_right_bottom, text="Cadastrar pessoa",
+                              command=create_pessoa)
+create_pessoa_button.place(relx=.25, rely=.6, relwidth=.5, relheight=0.15)
+create_pessoa_button.update()
 
 frame_camera = tk.Frame(janela, bd=5, relief='ridge')
 frame_camera.place(relx=.5, rely=0, relwidth=0.5, relheight=0.5)
