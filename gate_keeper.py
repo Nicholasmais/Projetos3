@@ -1,9 +1,8 @@
-from cgitb import text
 import tkinter as tk
 from tkinter import ttk
 import tkcalendar 
+
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from datetime import datetime
 from matplotlib.figure import Figure
 import os
 os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = '0' #webcam externa. Deve vir antes do import cv2
