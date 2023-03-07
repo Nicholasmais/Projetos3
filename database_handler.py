@@ -81,7 +81,7 @@ class DatabaseHandler():
         return pessoas
 
     def update_apartament(self, apto, responsavel):
-        if self.aptos[int(apto)] != responsavel:
+        if self.aptos[int(apto)] != responsavel and self.aptos[int(apto)] != None:
             old_responsavel = self.aptos[int(apto)]
             self.update_pessoa(old_responsavel, self.pessoas_codigo[old_responsavel]['nome'], apto, self.pessoas_codigo[old_responsavel]['data_nascimento'], 'morador')
 

@@ -20,10 +20,14 @@ def passage_num_plot(database, canvas, ax, dia):
 
     query = f"select date_format(horario_passagem, '%H') as hora, count(passagem) from logs where passagem = 'saida' and data_passagem like '{dia}' group by hora order by hora"
     row = database.select(query)
-
-    data_x_saida = [int(ponto[0])+bar_width/2 for ponto in row]
-    data_y_saida = [int(ponto[1]) for ponto in row]
-
+    
+    if isinstance(row[0], tuple):
+        data_x_saida = [int(ponto[0])+bar_width/2 for ponto in row]
+        data_y_saida = [int(ponto[1]) for ponto in row]
+    else:
+        data_x_saida = [int(ponto[0])+bar_width/2 for ponto in [row]]
+        data_y_saida = [int(ponto[1]) for ponto in [row]]
+        
     ax.bar(x=data_x_entrada, height=data_y_entrada, width=bar_width, label="Entrada")
     ax.bar(x=data_x_saida, height=data_y_saida, width=bar_width, label="Saída")
 

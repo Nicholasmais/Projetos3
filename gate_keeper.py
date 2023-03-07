@@ -165,6 +165,9 @@ def refresh_tables():
     for id,(pessoa, pessoa_info) in enumerate(table_pessoas_rows.items()):   
         table_pessoas.insert(parent='', index='end', iid=id, values=(pessoa, pessoa_info['apartamento'], pessoa_info['data_nascimento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
 
+    #camera
+    update_camera()
+
 def update_apartament():
     database.update_apartament(apartament_selected.get(),pessoas[pessoa_responsavel_selected.get()])
     refresh_tables()
@@ -239,8 +242,11 @@ label = tk.Label(frame_camera, width=frame_camera.winfo_width(), height=frame_ca
 label.place(relx=0, rely=0, relwidth=1, relheight=1)
 label.update()
 
-camera = Camera(database, label)
+camera = Camera(janela, database, label)
 label.after(0, camera.show_frame)
+
+def update_camera():
+    camera.update_camera_database()
 
 janela.minsize(janela_height, janel_width)
 janela.mainloop()
