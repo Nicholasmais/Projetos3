@@ -1,7 +1,7 @@
 select date_format(horario_passagem, '%H') as hora, count(passagem) from logs where passagem = 'entrada' group by hora order by hora;
 select * from logs order by horario_passagem;
 select * from placas_cadastradas;
-select * from logs;
+select * from logs order by data_passagem desc, horario_passagem;
 insert into logs(codigo_veiculo, data_passagem, horario_passagem, passagem) values(1,"2023-02-12", '10:23:21', 'entrada');
 update logs inner join perfil_cadastrados on perfil_cadastrados.nome = logs.nome set logs.codigo_veiculo = perfil_cadastrados.codigo;
 alter table logs 
