@@ -17,6 +17,9 @@ class DatabaseHandler():
         self.pessoas_placa = self.get_placa_responsavel()
         self.aptos = self.get_apartamentos()
 
+    def __format_date__(self, date):
+        return datetime.strptime(str(date), "%Y-%m-%d").strftime('%d/%m/%Y')
+
     def select(self, query):    
         cursor = self.db.cursor()
         cursor.execute(query)
@@ -77,7 +80,7 @@ class DatabaseHandler():
         res = cursor.fetchall()
         pessoas = {}
         for row in res:
-            pessoas[row[1]] = {"apartamento":row[2], "data_nascimento":datetime.strptime(str(row[3]), "%Y-%m-%d").strftime('%d/%m/%Y'), "tipo_pessoa":row[4]}
+            pessoas[row[1]] = {"apartamento":row[2], "data_nascimento":self.__format_date__(row[3]), "tipo_pessoa":row[4]}
         return pessoas
 
     def update_apartament(self, apto, responsavel):
@@ -148,3 +151,13 @@ class DatabaseHandler():
         query = "SELECT * from apartamento"        
         apto = {apto[1]:apto[2] for apto in self.select(query)}
         return apto
+    
+    def get_logs(self, column = "codigo", order = "desc"):
+        query = f"SELECT * from logs order by {column} {order}, codigo"
+        logs = {log[0]:{"codigo_veiculo":self.get_responsavel_by_placa_code(log[1]),"data_passagem":self.__format_date__(log[2]),"horario_passagem":log[3],"tipo_passagem":log[4]} for log in self.select(query)}
+        return logs
+    
+    def get_responsavel_by_placa_code(self, placa_code):
+        query = f"SELECT placa from placas_cadastradas where codigo = {placa_code}"        
+        placa = self.select(query)[0][0]
+        return placa

@@ -13,7 +13,7 @@ select apartamento.apartamento, pessoas.nome from apartamento left join pessoas 
 delete from pessoas where codigo > 3;
 delete from placas_cadastradas where codigo > 2;
 update apartamento set responsavel = null where codigo > 3;
-select apartamento, count(*) from pessoas group by apartamento;
+select apartamento.apartamento, count(pessoas.codigo) from apartamento left join pessoas on apartamento.codigo = pessoas.apartamento group by apartamento;
 select placas_cadastradas.placa, count(*) from logs inner join placas_cadastradas on logs.codigo_veiculo = placas_cadastradas.codigo group by logs.codigo_veiculo;
 select placas_cadastradas.placa, pessoas.nome from placas_cadastradas inner join pessoas on placas_cadastradas.responsavel = pessoas.codigo;
 select * from apartamento;
