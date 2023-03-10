@@ -81,7 +81,7 @@ def apartament_people_count(database, canvas, ax, plt):
   ax.grid(alpha=.25)
   canvas.draw()
 
-def pizza(database, canvas, ax, plt):
+def pizza(database, canvas, ax):
   ax.clear()
 
   query = 'SELECT apartamento.apartamento, COUNT(logs.codigo_veiculo) AS count_passagens FROM apartamento LEFT JOIN placas_cadastradas ON apartamento.responsavel = placas_cadastradas.responsavel LEFT JOIN logs ON logs.codigo_veiculo = placas_cadastradas.codigo GROUP BY apartamento.apartamento'
@@ -90,10 +90,7 @@ def pizza(database, canvas, ax, plt):
   apartamentos = [f"apartamento {row[0]}" for row in dados if row[1] != 0]
   qtd_passagens = [row[1] for row in dados if row[1] != 0]
 
-  escala_cores = plt.get_cmap('YlOrRd')
-  normalizador = plt.Normalize(min(qtd_passagens), max(qtd_passagens))
-
-  ax.bar(apartamentos, qtd_passagens, color=escala_cores(normalizador(qtd_passagens)))
+  ax.bar(apartamentos, qtd_passagens, color='#ADD8E6')
 
   ax.set_title('Número de passagens por apartamento.')
   ax.set_ylabel("Qtd. Passagens")

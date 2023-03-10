@@ -109,7 +109,7 @@ def change_graph():
           apartament_people_count(database, canvas, ax, plt)
         case "pizza":
           fig.set_size_inches((janel_width/2)/100, (janela_height/2)/100)          
-          pizza(database, canvas, ax, plt)
+          pizza(database, canvas, ax)
 
 grafico_label_text = tk.Label(frame_inputs, text="Selecionar gráfico")
 grafico_label_text.place(relx = 0, rely = 0.3, relwidth = 1, relheight = 0.1)
@@ -284,6 +284,9 @@ def refresh_tables():
     #camera
     update_camera()
 
+    #graficos
+    change_graph()
+
 def update_apartament():
     database.update_apartament(apartament_selected.get(),pessoas[pessoa_responsavel_selected.get()])
     refresh_tables()
@@ -295,28 +298,28 @@ update_apartament_button.place(relx=.35, rely=pessoas_dropdownbox.winfo_height()
 update_apartament_button.update()
 
 nome_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="Nome")
-nome_pessoa_label.place(relx=0, rely=0, relwidth=0.2, relheight=0.15)
+nome_pessoa_label.place(relx=0, rely=0, relwidth=0.2, relheight=0.1)
 nome_pessoa = tk.Entry(frame_bottom_right_right_bottom)
-nome_pessoa.place(relx=.2, rely=0, relwidth=.3, relheight=0.15)
+nome_pessoa.place(relx=.2, rely=0, relwidth=.3, relheight=0.1)
 
 apartament_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="Apartamento")
-apartament_pessoa_label.place(relx=0, rely=.15, relwidth=0.2, relheight=0.15)
+apartament_pessoa_label.place(relx=.5, rely=0, relwidth=0.2, relheight=0.1)
 apartament_pessoa_selected = tk.StringVar()
 apartament_pessoa_selected.set(apartaments[0])
 apartaments_pessoa_dropdownbox = ttk.Combobox(frame_bottom_right_right_bottom,
                                          textvariable= apartament_pessoa_selected,
                                          values=apartaments,
                                          state="readonly")
-apartaments_pessoa_dropdownbox.place(relx=.2, rely=.15, relwidth=.3, relheight=0.15)
+apartaments_pessoa_dropdownbox.place(relx=0.7, rely=0, relwidth=.3, relheight=0.1)
 apartaments_pessoa_dropdownbox.update()
 
 nascimento_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="Nascimento")
-nascimento_pessoa_label.place(relx=.5, rely=0, relwidth=0.2, relheight=0.15)
+nascimento_pessoa_label.place(relx=0, rely=.1, relwidth=0.2, relheight=0.1)
 nascimento = tkcalendar.DateEntry(frame_bottom_right_right_bottom, state='normal')
-nascimento.place(relx=0.7, rely=0, relwidth=.3, relheight=0.15)
+nascimento.place(relx=.2, rely=.1, relwidth=.3, relheight=0.1)
 
 tipo_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="Status")
-tipo_pessoa_label.place(relx=.5, rely=.15, relwidth=0.2, relheight=0.15)
+tipo_pessoa_label.place(relx=.5, rely=.1, relwidth=0.2, relheight=0.1)
 
 pessoa_selected = tk.StringVar()
 pessoa_selected.set(list(tipo_pessoa.values())[0])
@@ -328,8 +331,8 @@ tipo_pessoa_dropdownbox = ttk.Combobox(frame_bottom_right_right_bottom,
 def select_tipo_pessoa(event):
     selected = event.widget.get()
     if selected == "Responsável":
-        placa_label.place(relx=.5, rely=.3, relwidth=.2, relheight=0.15)
-        placa_entry.place(relx=.7, rely=.3, relwidth=.3, relheight=0.15)
+        placa_label.place(relx=.5, rely=.2, relwidth=.2, relheight=0.1)
+        placa_entry.place(relx=.7, rely=.2, relwidth=.3, relheight=0.1)
     else:
         placa_label.place_forget()
         placa_entry.place_forget()
@@ -338,7 +341,7 @@ placa_label = tk.Label(frame_bottom_right_right_bottom, text="Placa")
 placa_entry = tk.Entry(frame_bottom_right_right_bottom)
 
 tipo_pessoa_dropdownbox.bind("<<ComboboxSelected>>",select_tipo_pessoa)
-tipo_pessoa_dropdownbox.place(relx=.7, rely=.15, relwidth=.3, relheight=0.15)
+tipo_pessoa_dropdownbox.place(relx=.7, rely=.1, relwidth=.3, relheight=0.1)
 tipo_pessoa_dropdownbox.update()
 
 def create_pessoa():
@@ -347,7 +350,7 @@ def create_pessoa():
 
 create_pessoa_button = ttk.Button(frame_bottom_right_right_bottom, text="Cadastrar pessoa",
                               command=create_pessoa)
-create_pessoa_button.place(relx=.25, rely=.45, relwidth=.5, relheight=0.15)
+create_pessoa_button.place(relx=.25, rely=.3, relwidth=.5, relheight=0.15)
 create_pessoa_button.update()
 
 frame_camera = tk.Frame(janela, bd=5, relief='ridge',bg='#F7DC6F')
