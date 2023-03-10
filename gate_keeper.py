@@ -89,27 +89,27 @@ ax = fig.add_subplot(111)
 
 passage_num_plot(database, canvas, ax, '')
 
-input_data = tkcalendar.DateEntry(frame_inputs, state='normal')
+input_data = tkcalendar.DateEntry(frame_inputs, state='normal', date_pattern='dd/MM/yyyy')
 input_data.delete(0, "end")
 input_data.place(relx=0.05, rely=0.1, relwidth=0.9, relheight=0.1)
 
-button = ttk.Button(frame_inputs, text="Dia específico", command=lambda:passage_num_plot(database, canvas, ax, input_data.get_date()))
-button.place(relx=0.05, rely=0.2, relwidth=0.45, relheight=0.1)
-button = ttk.Button(frame_inputs, text="Todos os dias", command=lambda:passage_num_plot(database, canvas, ax, ''))
-button.place(relx=0.5, rely=0.2, relwidth=0.45, relheight=0.1)
-
-def change_graph():
-    option = graph_selected.get()
+def change_graph(dia):
+    option = graph_selected.get()    
     match option:
         case "num_pass":
           fig.set_size_inches((janel_width/2.03125)/100, (janela_height/2.06)/100)
-          passage_num_plot(database, canvas, ax, '')
+          passage_num_plot(database, canvas, ax, dia)
         case "apto_count":
           fig.set_size_inches((janel_width/2)/100, (janela_height/2)/100)
-          apartament_people_count(database, canvas, ax, plt)
+          apartament_people_count(database, canvas, ax, plt, dia)
         case "pizza":
           fig.set_size_inches((janel_width/2)/100, (janela_height/2)/100)          
-          pizza(database, canvas, ax)
+          pizza(database, canvas, ax, dia)
+
+button = ttk.Button(frame_inputs, text="Dia específico", command=lambda :change_graph(input_data.get()))
+button.place(relx=0.05, rely=0.2, relwidth=0.45, relheight=0.1)
+button = ttk.Button(frame_inputs, text="Todos os dias", command=lambda :change_graph(''))
+button.place(relx=0.5, rely=0.2, relwidth=0.45, relheight=0.1)
 
 grafico_label_text = tk.Label(frame_inputs, text="Selecionar gráfico")
 grafico_label_text.place(relx = 0, rely = 0.3, relwidth = 1, relheight = 0.1)
@@ -117,9 +117,9 @@ grafico_label_text.place(relx = 0, rely = 0.3, relwidth = 1, relheight = 0.1)
 graph_selected = tk.StringVar()
 graph_selected.set("num_pass")
 
-graph_option1 = ttk.Radiobutton(frame_inputs, text = "Passagens por horário", value = "num_pass", variable = graph_selected, command=change_graph, takefocus=False)
-graph_option2 = ttk.Radiobutton(frame_inputs, text = "Pessoas por apartamento", value = "apto_count", variable = graph_selected, command=change_graph, takefocus=False)
-graph_option3 = ttk.Radiobutton(frame_inputs, text = "Passagens por apartamento", value = "pizza", variable = graph_selected, command=change_graph, takefocus=False)
+graph_option1 = ttk.Radiobutton(frame_inputs, text = "Passagens por horário", value = "num_pass", variable = graph_selected, command=lambda: change_graph(''), takefocus=False)
+graph_option2 = ttk.Radiobutton(frame_inputs, text = "Pessoas por apartamento", value = "apto_count", variable = graph_selected, command=lambda: change_graph(''), takefocus=False)
+graph_option3 = ttk.Radiobutton(frame_inputs, text = "Passagens por apartamento", value = "pizza", variable = graph_selected, command=lambda: change_graph(''), takefocus=False)
 
 graph_option1.place(relx = 0.05, rely = 0.4, relwidth = 0.9, relheight = 0.1)
 graph_option2.place(relx = 0.05, rely = 0.5, relwidth = 0.9, relheight = 0.1)
@@ -285,7 +285,7 @@ def refresh_tables():
     update_camera()
 
     #graficos
-    change_graph()
+    change_graph(input_data.get())
 
 def update_apartament():
     database.update_apartament(apartament_selected.get(),pessoas[pessoa_responsavel_selected.get()])
