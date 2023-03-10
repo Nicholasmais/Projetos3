@@ -48,10 +48,9 @@ def passage_num_plot(database, canvas, ax, dia):
 
     ax.bar(x=data_x_saida, height=data_y_saida, width=bar_width, label="Saída")
     for i in range(len(data_x_saida)):
-      ax.annotate(str(data_y_saida[i]), xy=(data_x_saida[i], data_y_saida[i]), ha='center', va='bottom')
-
-    ax.set_ylabel('Número de passagens')
-
+      if str(data_y_saida[i]) != "0":
+        ax.annotate(str(data_y_saida[i]), xy=(data_x_saida[i], data_y_saida[i]), ha='center', va='bottom')
+        
     dia = f"{data_min} - {data_max}" if dia == "%" else datetime.strptime(dia, "%Y-%m-%d").strftime('%d/%m/%Y')
     ax.set_title(f'Passagens por horário\n{dia}', fontdict={'fontsize':10})
 
@@ -60,8 +59,8 @@ def passage_num_plot(database, canvas, ax, dia):
     
     max_passagens = max([*data_y_entrada, *data_y_saida, 0]) + 1
     if max_passagens > 10:
-      y_ticks = [tick for tick in range(0,max_passagens+1, 10)] 
-      ax.set_ylim(0, max_passagens+5)
+      y_ticks = [tick for tick in range(0,max_passagens+1, int(max_passagens/10))] 
+      ax.set_ylim(0, max_passagens+int(max_passagens/10))
     else:
       y_ticks = [tick for tick in range(0,max_passagens+1)]
       ax.set_ylim(0, max_passagens+.5)
@@ -80,23 +79,26 @@ def apartament_people_count(database, canvas, ax, plt, dia):
 
   apartamentos = [val[0] for val in dados]
   qtd_pessoas = [int(val[1]) for val in dados]
+  max_pessoas = max(qtd_pessoas) if qtd_pessoas else 0
 
   escala_cores = plt.get_cmap('Blues')
-  normalizador = plt.Normalize(min(qtd_pessoas), max(qtd_pessoas))
+  normalizador = plt.Normalize(min(qtd_pessoas), max_pessoas)
 
   ax.bar(apartamentos, qtd_pessoas, color=escala_cores(normalizador(qtd_pessoas)))
 
-  for i in range(len(apartamentos)):
-    ax.annotate(str(qtd_pessoas[i]), xy=(apartamentos[i], qtd_pessoas[i]), ha='center', va='bottom')
+  for i in range(len(apartamentos)):    
+    if str(qtd_pessoas[i]) != "0":
+      ax.annotate(str(qtd_pessoas[i]), xy=(apartamentos[i], qtd_pessoas[i]), ha='center', va='bottom')
 
   ax.set_title('Número de pessoas por apartamento.')
   ax.set_ylabel("Qtd. Pessoas")
-  if max(qtd_pessoas) > 10:
-    y_ticks = [tick for tick in range(0,max(qtd_pessoas)+1, 10)] 
-    ax.set_ylim(0, max(qtd_pessoas)+5)
+  
+  if max_pessoas > 10:
+    y_ticks = [tick for tick in range(0,max_pessoas+1, int(max_pessoas/10))] 
+    ax.set_ylim(0, max_pessoas+int(max_pessoas/10))
   else:
-    y_ticks = [tick for tick in range(0,max(qtd_pessoas)+1)]
-    ax.set_ylim(0, max(qtd_pessoas)+.5)
+    y_ticks = [tick for tick in range(0,max_pessoas+1)]
+    ax.set_ylim(0, max_pessoas+.5)
 
   ax.set_yticks(y_ticks)
   ax.set_xticks(apartamentos)
@@ -105,6 +107,7 @@ def apartament_people_count(database, canvas, ax, plt, dia):
 
 def pizza(database, canvas, ax, dia):
   ax.clear()
+
   dia = datetime.strptime(dia, "%d/%m/%Y").strftime('%Y-%m-%d') if str(dia) != '' else "%" 
       
   query = f"select min(data_passagem), max(data_passagem) from logs"    
@@ -122,18 +125,21 @@ def pizza(database, canvas, ax, dia):
   ax.bar(apartamentos, qtd_passagens, color='#ADD8E6')
 
   for i in range(len(apartamentos)):
-    ax.annotate(str(qtd_passagens[i]), xy=(apartamentos[i], qtd_passagens[i]), ha='center', va='bottom')
+    if str(qtd_passagens[i]) != "0":
+      ax.annotate(str(qtd_passagens[i]), xy=(apartamentos[i], qtd_passagens[i]), ha='center', va='bottom')
   
   dia = f"{data_min} - {data_max}" if dia == "%" else datetime.strptime(dia, "%Y-%m-%d").strftime('%d/%m/%Y')
-  ax.set_title(f'Número de passagens por apartamento.\n{dia}')
+  ax.set_title(f'Número de passagens por apartamento.\n{dia}', fontdict={'fontsize':10})
   ax.set_ylabel("Qtd. Passagens")
-  if max(qtd_passagens) > 10:
-    y_ticks = [tick for tick in range(0,max(qtd_passagens)+1, 10)] 
-    ax.set_ylim(0, max(qtd_passagens)+5)
+  
+  max_qtd_passagens = max(qtd_passagens) if qtd_passagens else 0
+  if max_qtd_passagens > 10:
+    y_ticks = [tick for tick in range(0,max_qtd_passagens+1, int(max_qtd_passagens/10))] 
+    ax.set_ylim(0, max_qtd_passagens+5)
 
   else:
-    y_ticks = [tick for tick in range(0,max(qtd_passagens)+1)]
-    ax.set_ylim(0, max(qtd_passagens)+.5)
+    y_ticks = [tick for tick in range(0,max_qtd_passagens+1)]
+    ax.set_ylim(0, max_qtd_passagens+1)
 
   ax.set_yticks(y_ticks)
   ax.set_xticks(apartamentos)

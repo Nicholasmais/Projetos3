@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from click import command
 import tkcalendar 
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -34,7 +35,7 @@ style.map('TCombobox', fieldbackground=[('readonly', 'white')])
 style.configure('TCombobox.entry', background='lightblue')
 style.configure('TButton', foreground='black', background='lightblue')
 style.map('TButton', background=[('active', '#E0FFFF')])
-style.configure('TRadiobutton', foreground='black', background='lightblue')
+style.configure('TRadiobutton', foreground='black', background='lightblue', jusitfy="center")
 style.map('TRadiobutton', background=[('active', '#E0FFFF')])
 
 frame_bottom = tk.Frame(janela, bd=5, relief='ridge',bg='#F7DC6F')
@@ -94,7 +95,7 @@ input_data.delete(0, "end")
 input_data.place(relx=0.05, rely=0.1, relwidth=0.9, relheight=0.1)
 
 def change_graph(dia):
-    option = graph_selected.get()    
+    option = graph_selected.get()
     match option:
         case "num_pass":
           fig.set_size_inches((janel_width/2.03125)/100, (janela_height/2.06)/100)
@@ -188,8 +189,8 @@ table_pessoas_rows = database.get_pessoas_columns()
 
 tipo_pessoa = {"morador":"Morador","responsavel":"Responsável"}
 
-for id,(pessoa, pessoa_info) in enumerate(table_pessoas_rows.items()):   
-    table_pessoas.insert(parent='', index='end', iid=id, values=(pessoa, pessoa_info['apartamento'], pessoa_info['data_nascimento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
+for codigo, pessoa_info in table_pessoas_rows.items():
+    table_pessoas.insert(parent='', index='end', iid=codigo, values=(pessoa_info['nome'], pessoa_info['apartamento'], pessoa_info['data_nascimento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
 
 pessoas = database.get_responsaveis()
 pessoa_responsavel_selected = tk.StringVar()
@@ -242,12 +243,13 @@ table_logs_rows = database.get_logs()
 tipo_passagem = {"entrada":"Entrada","saida":"Saída"}
 
 for id,(codigo, log_info) in enumerate(table_logs_rows.items()):
-    table_logs.insert(parent='', index='end', iid=id, values=(codigo,
-                                                               log_info['codigo_veiculo'],
-                                                               log_info['data_passagem'],
-                                                               log_info['horario_passagem'],
-                                                               tipo_passagem[log_info['tipo_passagem']])
-                                                               )
+    table_logs.insert(parent='', index='end', iid=id, 
+                       values=(codigo,
+                            log_info['codigo_veiculo'],
+                            log_info['data_passagem'],
+                            log_info['horario_passagem'],
+                            tipo_passagem[log_info['tipo_passagem']])
+                            )
 
 def refresh_tables():
     #Tabela apartamentos
@@ -267,8 +269,8 @@ def refresh_tables():
     #Tabela pessoas
     table_pessoas.delete(*table_pessoas.get_children())
     table_pessoas_rows = database.get_pessoas_columns()
-    for id,(pessoa, pessoa_info) in enumerate(table_pessoas_rows.items()):   
-        table_pessoas.insert(parent='', index='end', iid=id, values=(pessoa, pessoa_info['apartamento'], pessoa_info['data_nascimento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
+    for codigo, pessoa_info in table_pessoas_rows.items():
+        table_pessoas.insert(parent='', index='end', iid=codigo, values=(pessoa_info['nome'], pessoa_info['apartamento'], pessoa_info['data_nascimento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
     
     #Tabela logs
     table_logs.delete(*table_logs.get_children())
@@ -315,7 +317,7 @@ apartaments_pessoa_dropdownbox.update()
 
 nascimento_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="Nascimento")
 nascimento_pessoa_label.place(relx=0, rely=.1, relwidth=0.2, relheight=0.1)
-nascimento = tkcalendar.DateEntry(frame_bottom_right_right_bottom, state='normal')
+nascimento = tkcalendar.DateEntry(frame_bottom_right_right_bottom, state='normal', date_pattern='dd/MM/yyyy')
 nascimento.place(relx=.2, rely=.1, relwidth=.3, relheight=0.1)
 
 tipo_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="Status")
@@ -328,8 +330,12 @@ tipo_pessoa_dropdownbox = ttk.Combobox(frame_bottom_right_right_bottom,
                                          values=list(tipo_pessoa.values()),
                                          state="readonly")
 
-def select_tipo_pessoa(event):
-    selected = event.widget.get()
+def select_tipo_pessoa(event, tipo_pessoa = None):
+    if tipo_pessoa:
+        selected = tipo_pessoa
+    else:
+        selected = event.widget.get()
+
     if selected == "Responsável":
         placa_label.place(relx=.5, rely=.2, relwidth=.2, relheight=0.1)
         placa_entry.place(relx=.7, rely=.2, relwidth=.3, relheight=0.1)
@@ -344,13 +350,48 @@ tipo_pessoa_dropdownbox.bind("<<ComboboxSelected>>",select_tipo_pessoa)
 tipo_pessoa_dropdownbox.place(relx=.7, rely=.1, relwidth=.3, relheight=0.1)
 tipo_pessoa_dropdownbox.update()
 
+def select_row_pessoas(event):
+    if is_to_create or len(event.widget.selection()) == 0:
+        return None
+    global table_iid
+    table_iid = event.widget.selection()[0]
+    row = table_pessoas.item(table_iid)['values']
+    nome_pessoa.delete(0,tk.END)
+    nome_pessoa.insert(0,row[0])
+    apartaments_pessoa_dropdownbox.current(row[1])
+    nascimento.set_date(row[2])
+    tipo_pessoa_dropdownbox.current(next(i for i,res in enumerate(tipo_pessoa) if tipo_pessoa[res] == row[3]))
+    select_tipo_pessoa(None, row[3])
+    if row[3] == "Responsável":
+        pessoa_codigo = database.select(f"select codigo from pessoas where codigo = '{table_iid}'")
+        placa_entry.delete(0, tk.END)
+        placa_entry.insert(0, database.pessoas_placa[str(pessoa_codigo)])
+
+table_pessoas.bind('<<TreeviewSelect>>', select_row_pessoas)
+
 def create_pessoa():
-    database.create_pessoa((nome_pessoa.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get()), placa_entry.get()) )
+    global table_iid
+    if is_to_create:
+        database.create_pessoa((nome_pessoa.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get()), placa_entry.get()) )
+    else:        
+        database.update_pessoa(str(table_iid),nome_pessoa.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get()), placa_entry.get())
     refresh_tables()
 
-create_pessoa_button = ttk.Button(frame_bottom_right_right_bottom, text="Cadastrar pessoa",
-                              command=create_pessoa)
-create_pessoa_button.place(relx=.25, rely=.3, relwidth=.5, relheight=0.15)
+save_selected = tk.StringVar()
+save_selected.set("create")
+is_to_create = True
+def set_is_to_create(val):
+    global is_to_create
+    is_to_create = val
+
+save_option1 = ttk.Radiobutton(frame_bottom_right_right_bottom, text = "Cadastrar", value = "create", variable = save_selected, command=lambda: set_is_to_create(True), takefocus=False)
+save_option2 = ttk.Radiobutton(frame_bottom_right_right_bottom, text = "Editar", value = "update", variable = save_selected, command=lambda: set_is_to_create(False), takefocus=False)
+
+save_option1.place(relx = 0.1, rely = 0.3, relwidth = 0.3, relheight = 0.15)
+save_option2.place(relx = 0.4, rely = 0.3, relwidth = 0.3, relheight = 0.15)
+
+create_pessoa_button = ttk.Button(frame_bottom_right_right_bottom, text="Salvar", command=create_pessoa)
+create_pessoa_button.place(relx=.7, rely=.3, relwidth=.3, relheight=0.15)
 create_pessoa_button.update()
 
 frame_camera = tk.Frame(janela, bd=5, relief='ridge',bg='#F7DC6F')

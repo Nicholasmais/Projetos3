@@ -26,6 +26,8 @@ class DatabaseHandler():
         rows = cursor.fetchall()
         if len(rows) == 1 and len(rows[0]) != 1:
             return rows[0]
+        elif len(rows) == 1 and len(rows[0]) == 1:
+            return rows[0][0]
         else:
             return rows
 
@@ -80,7 +82,7 @@ class DatabaseHandler():
         res = cursor.fetchall()
         pessoas = {}
         for row in res:
-            pessoas[row[1]] = {"apartamento":row[2], "data_nascimento":self.__format_date__(row[3]), "tipo_pessoa":row[4]}
+            pessoas[row[0]] = {"apartamento":row[2], "data_nascimento":self.__format_date__(row[3]), "tipo_pessoa":row[4], 'nome':row[1]}
         return pessoas
 
     def update_apartament(self, apto, responsavel):
@@ -106,7 +108,7 @@ class DatabaseHandler():
         self.pessoas_codigo = self.get_pessoas()
 
         query = 'select codigo from pessoas order by codigo desc limit 1;'
-        codigo_pessoa_nova = self.select(query)[0][0]
+        codigo_pessoa_nova = self.select(query)
                 
         if pessoa_dados[3] == 'responsavel':
           query = 'insert into placas_cadastradas(placa, responsavel) values (%s, %s)'
@@ -142,11 +144,16 @@ class DatabaseHandler():
         palcas = {row[0]:row[1] for row in self.select(query)}
         return palcas
     
-    def update_pessoa(self, *pessoa_info):
-        query = 'update pessoas set nome = %s, apartamento = %s, data_nascimento = %s, tipo_pessoa = %s where codigo = %s;'
-        val = pessoa_info
-        self.insert(query, [*val[1:], val[0]])
-    
+    def update_pessoa(self, codigo, nome, apto, data, tipo, placa=None):
+        if placa:
+            query = 'update pessoas set nome = %s, apartamento = %s, data_nascimento = %s, tipo_pessoa = %s where codigo = %s;'
+            self.insert(query, [nome, apto, data, tipo, codigo])
+            query = 'update placas_cadastradas set placa = %s where responsavel = %s;'
+            self.insert(query, [placa, codigo])
+        else:
+            query = 'update pessoas set nome = %s, apartamento = %s, data_nascimento = %s, tipo_pessoa = %s where codigo = %s;'
+            self.insert(query, [nome, apto, data, tipo, codigo])
+
     def get_apartamentos(self):
         query = "SELECT * from apartamento"        
         apto = {apto[1]:apto[2] for apto in self.select(query)}

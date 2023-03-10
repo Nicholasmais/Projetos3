@@ -53,7 +53,7 @@ class Camera():
         color_gray_frame = cv2.cvtColor(gray_frame, cv2.COLOR_GRAY2BGR)#para os retangulo coloridos na imagem cinza
         # desenhar retângulos na imagem
         
-        if True:
+        if False:
             for i, rectangle in enumerate(rectangles):            
                 # obter as coordenadas do retângulo
                 x, y, w, h = cv2.boundingRect(rectangle)
