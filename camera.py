@@ -3,6 +3,7 @@ import pytesseract
 import random
 import time
 from PIL import Image, ImageTk
+import serial
 
 class Camera():
     def __init__(self, root, database, label, function_refresh_tables):
@@ -14,11 +15,16 @@ class Camera():
         #https://github.com/UB-Mannheim/tesseract/wiki
         pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
         self.capture = cv2.VideoCapture(0)
+        #self.esp32 = serial.Serial("COM5", 9600)
 
         self.min_width, self.max_width = 75, 200
         self.min_height, self.max_height = 30,60
         self.plate_ratio = 150/70
         self.marg = 10
+
+    def send_high_esp(self):
+        return None
+        self.esp32.write(b"1")
 
     def update_camera_database(self):
         query = 'select placas_cadastradas.codigo, placas_cadastradas.placa, pessoas.nome from placas_cadastradas inner join pessoas on placas_cadastradas.responsavel = pessoas.codigo'
@@ -64,7 +70,7 @@ class Camera():
                 text = pytesseract.image_to_string(cropped_image).strip()
 
                 # Insere o texto correspondente a cada retângulo
-                texto = f"{text} width = {w} height = {h}"
+                texto = f"texto = {text} width = {w} height = {h}"
                 cv2.putText(color_gray_frame, texto, (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor, 2)
             
                 if text in self.placas_cadastradas:     
@@ -77,6 +83,9 @@ class Camera():
 
                     sql = "insert into logs(codigo_veiculo, data_passagem, horario_passagem, passagem) values(%s,%s,%s,%s)"
                     val = (int(self.placas_cadastradas[text]['codigo']),data_passagem, horario_passagem, self.passagem_dict[passagem])
+                    
+                    self.send_high_esp()
+                    
                     self.database.insert(sql, val)
                     self.function_refresh_tables()
 

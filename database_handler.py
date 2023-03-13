@@ -24,9 +24,7 @@ class DatabaseHandler():
         cursor = self.db.cursor()
         cursor.execute(query)
         rows = cursor.fetchall()
-        if len(rows) == 1 and len(rows[0]) != 1:
-            return rows[0]
-        elif len(rows) == 1 and len(rows[0]) == 1:
+        if len(rows) == 1 and len(rows[0]) == 1:
             return rows[0][0]
         else:
             return rows
@@ -71,6 +69,7 @@ class DatabaseHandler():
         cursor.execute(query)
         res = cursor.fetchall()
         apartaments_info = {}
+
         for row in res:   
             apartaments_info[row[0]] = {"responsavel":pessoas.get(row[1],""),"moradores":pessoas_info.get(row[0],[]), "placa":row[2] if row[2] else ''}
         return apartaments_info
@@ -82,59 +81,78 @@ class DatabaseHandler():
         res = cursor.fetchall()
         pessoas = {}
         for row in res:
-            pessoas[row[0]] = {"apartamento":row[2], "data_nascimento":self.__format_date__(row[3]), "tipo_pessoa":row[4], 'nome':row[1]}
+            pessoas[row[0]] = {'nome':row[1],'cpf':row[2], "apartamento":row[3], "data_nascimento":self.__format_date__(row[4]), "tipo_pessoa":row[5]}
         return pessoas
 
     def update_apartament(self, apto, responsavel):
-        if self.aptos[int(apto)] != responsavel and self.aptos[int(apto)] != None:
-            old_responsavel = self.aptos[int(apto)]
-            self.update_pessoa(old_responsavel, self.pessoas_codigo[old_responsavel]['nome'], apto, self.pessoas_codigo[old_responsavel]['data_nascimento'], 'morador')
+        try:
+            if self.aptos[int(apto)] != responsavel and self.aptos[int(apto)] != None:
+                old_responsavel = self.aptos[int(apto)]
+                self.update_pessoa(old_responsavel, self.pessoas_codigo[old_responsavel]['nome'], apto, self.pessoas_codigo[old_responsavel]['data_nascimento'], 'morador')
 
-        if not apto or not responsavel:
-            return None
+            if not apto or not responsavel:
+                return None
+            
+            query = 'update apartamento set responsavel = %s where apartamento = %s'
+            parameters = (responsavel, apto)
+            with self.db.cursor() as cursor:
+                cursor.execute(query, parameters)        
+                self.db.commit()
+            self.update_pessoa(responsavel, self.pessoas_codigo[responsavel]['nome'], self.pessoas_codigo[responsavel]['cpf'], apto, self.pessoas_codigo[responsavel]['data_nascimento'], 'responsavel')                
+
+            return "Sucesso ao atualizar apartamento.", 200
         
-        query = 'update apartamento set responsavel = %s where apartamento = %s'
-        parameters = (responsavel, apto)
-        with self.db.cursor() as cursor:
-            cursor.execute(query, parameters)        
-            self.db.commit()
-        self.update_pessoa(responsavel, self.pessoas_codigo[responsavel]['nome'], apto, self.pessoas_codigo[responsavel]['data_nascimento'], 'responsavel')                
-
+        except Exception as e:
+            print(e)
+            return "Erro ao atuailzar apartamento", 500
+        
     def create_pessoa(self, pessoa_dados):
-        query = 'insert into pessoas(nome, apartamento, data_nascimento, tipo_pessoa) values (%s, %s, %s, %s)'
+        try:
+            query = 'insert into pessoas(nome, cpf, apartamento, data_nascimento, tipo_pessoa) values (%s, %s, %s, %s, %s)'
 
-        val = pessoa_dados
-        self.insert(query, val[:-1])
-        self.pessoas_codigo = self.get_pessoas()
+            val = pessoa_dados
 
-        query = 'select codigo from pessoas order by codigo desc limit 1;'
-        codigo_pessoa_nova = self.select(query)
-                
-        if pessoa_dados[3] == 'responsavel':
-          query = 'insert into placas_cadastradas(placa, responsavel) values (%s, %s)'
-          val = [val[-1], codigo_pessoa_nova]
-          self.insert(query, val)
-          self.pessoas_placa = self.get_placa_responsavel()
+            self.insert(query, val[:-1])
+            self.pessoas_codigo = self.get_pessoas()
 
-          query = 'select codigo from pessoas order by codigo desc limit 1'
-          cursor = self.db.cursor()
-          cursor.execute(query)
-          res = cursor.fetchall()[0][0]
-  
-          self.update_apartament(pessoa_dados[1], res)
+            query = 'select codigo from pessoas order by codigo desc limit 1;'
+            codigo_pessoa_nova = self.select(query)
+                    
+            if pessoa_dados[4] == 'responsavel':
+                query = 'insert into placas_cadastradas(placa, responsavel) values (%s, %s)'
+                val = [val[-1], codigo_pessoa_nova]
+                self.insert(query, val)
+                self.pessoas_placa = self.get_placa_responsavel()
+
+                query = 'select codigo from pessoas order by codigo desc limit 1'
+                cursor = self.db.cursor()
+                cursor.execute(query)
+                res = cursor.fetchall()[0][0]
+        
+                self.update_apartament(pessoa_dados[2], res)
+            return f"Sucesso ao criar {pessoa_dados[3]}", 200
+        except Exception as e:
+            match e.errno:
+                case 1062:
+                    return "CPF já cadastrado.", 500
+                case 1644:
+                    return "Preencha todos os campos", 500
+                case _:
+                    return f"Erro ao cadastrar {pessoa_dados[3]}", 500
 
     def get_responsaveis(self):
         query = "SELECT nome,codigo from pessoas where tipo_pessoa = 'responsavel'"        
-        responsaveis = {responsavel[0]:responsavel[1] for responsavel in self.select(query)}
-        return responsaveis
+        responsaveis = {responsavel[0]:responsavel[1] for responsavel in self.select(query)}        
+        return responsaveis if responsaveis else {"":""}
     
     def get_pessoas(self):
-        query = "SELECT * from pessoas"        
+        query = "SELECT * from pessoas"   
         responsaveis = {responsavel[0]:{
                         "nome":responsavel[1],
-                        "apartamento":responsavel[2],
-                        "data_nascimento":responsavel[3],
-                        "tipo_pessoa":responsavel[4]
+                        "cpf":responsavel[2],
+                        "apartamento":responsavel[3],
+                        "data_nascimento":responsavel[4],
+                        "tipo_pessoa":responsavel[5]
                         }
                             for responsavel in self.select(query)}
         return responsaveis
@@ -144,16 +162,21 @@ class DatabaseHandler():
         palcas = {row[0]:row[1] for row in self.select(query)}
         return palcas
     
-    def update_pessoa(self, codigo, nome, apto, data, tipo, placa=None):
-        if placa:
-            query = 'update pessoas set nome = %s, apartamento = %s, data_nascimento = %s, tipo_pessoa = %s where codigo = %s;'
-            self.insert(query, [nome, apto, data, tipo, codigo])
-            query = 'update placas_cadastradas set placa = %s where responsavel = %s;'
-            self.insert(query, [placa, codigo])
-        else:
-            query = 'update pessoas set nome = %s, apartamento = %s, data_nascimento = %s, tipo_pessoa = %s where codigo = %s;'
-            self.insert(query, [nome, apto, data, tipo, codigo])
-
+    def update_pessoa(self, codigo, nome, cpf, apto, data, tipo, placa=None):
+        try:
+            if placa:
+                query = 'update pessoas set nome = %s, cpf = %s, apartamento = %s, data_nascimento = %s, tipo_pessoa = %s where codigo = %s;'
+                self.insert(query, [nome, cpf, apto, data, tipo, codigo])
+                query = 'update placas_cadastradas set placa = %s where responsavel = %s;'
+                self.insert(query, [placa, codigo])
+            else:
+                query = 'update pessoas set nome = %s, cpf = %s, apartamento = %s, data_nascimento = %s, tipo_pessoa = %s where codigo = %s;'
+                self.insert(query, [nome, cpf, apto, data, tipo, codigo])
+            return f"Sucesso ao atualizar {tipo}", 200
+        except Exception as e:
+            print(e)
+            return "Erro ao atualizar pessoa", 500
+    
     def get_apartamentos(self):
         query = "SELECT * from apartamento"        
         apto = {apto[1]:apto[2] for apto in self.select(query)}
@@ -166,5 +189,13 @@ class DatabaseHandler():
     
     def get_responsavel_by_placa_code(self, placa_code):
         query = f"SELECT placa from placas_cadastradas where codigo = {placa_code}"        
-        placa = self.select(query)[0][0]
+        placa = self.select(query)
         return placa
+
+    def delete_pessoa(self, codigo):
+        try:
+            query = "delete from pessoas where codigo = %s;"        
+            self.insert(query, [codigo])
+            return "Sucesso ao deletar", 200
+        except Exception as e:
+            return "Erro ao deletar", 500

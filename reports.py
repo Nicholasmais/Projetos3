@@ -17,10 +17,10 @@ def passage_num_plot(database, canvas, ax, dia):
     bar_width = 0.3
     
     query = f"select min(data_passagem), max(data_passagem) from logs"    
-    data_min, data_max = database.select(query)
+    data_min, data_max = database.select(query)[0]
 
-    data_min = data_min.strftime('%d/%m/%Y')
-    data_max = data_max.strftime('%d/%m/%Y')
+    data_min = data_min.strftime('%d/%m/%Y') if data_min else datetime.now().strftime('%d/%m/%Y')
+    data_max = data_max.strftime('%d/%m/%Y') if data_max else datetime.now().strftime('%d/%m/%Y')
 
     query = f"select date_format(horario_passagem, '%H') as hora, count(passagem) from logs where passagem = 'entrada' and data_passagem like '{dia}' group by hora order by hora"    
     row = database.select(query)
@@ -50,7 +50,7 @@ def passage_num_plot(database, canvas, ax, dia):
     for i in range(len(data_x_saida)):
       if str(data_y_saida[i]) != "0":
         ax.annotate(str(data_y_saida[i]), xy=(data_x_saida[i], data_y_saida[i]), ha='center', va='bottom')
-        
+
     dia = f"{data_min} - {data_max}" if dia == "%" else datetime.strptime(dia, "%Y-%m-%d").strftime('%d/%m/%Y')
     ax.set_title(f'Passagens por horário\n{dia}', fontdict={'fontsize':10})
 
@@ -111,11 +111,11 @@ def pizza(database, canvas, ax, dia):
   dia = datetime.strptime(dia, "%d/%m/%Y").strftime('%Y-%m-%d') if str(dia) != '' else "%" 
       
   query = f"select min(data_passagem), max(data_passagem) from logs"    
-  data_min, data_max = database.select(query)
+  data_min, data_max = database.select(query)[0]
 
-  data_min = data_min.strftime('%d/%m/%Y')
-  data_max = data_max.strftime('%d/%m/%Y')
-
+  data_min = data_min.strftime('%d/%m/%Y') if data_min else datetime.now().strftime('%d/%m/%Y')
+  data_max = data_max.strftime('%d/%m/%Y') if data_max else datetime.now().strftime('%d/%m/%Y')
+  
   query = f"SELECT apartamento.apartamento, COUNT(logs.codigo_veiculo) AS count_passagens FROM apartamento LEFT JOIN placas_cadastradas ON apartamento.responsavel = placas_cadastradas.responsavel LEFT JOIN logs ON logs.codigo_veiculo = placas_cadastradas.codigo where logs.data_passagem like '{dia}'GROUP BY apartamento.apartamento"
   dados = database.select(query)
 

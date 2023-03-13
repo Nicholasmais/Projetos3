@@ -155,7 +155,7 @@ for id,(apto, apto_info) in enumerate(table_rows.items()):
         table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
         for id2,morador in enumerate(apto_info['moradores']):
             if morador != apto_info['responsavel']:
-                table.insert(parent=id, index='end', iid=f"c{id2}", values=('', morador, ''))
+                table.insert(parent=id, index='end', iid=f"M-{id}-{id2}", values=('', morador, ''))
     else:
         table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
 
@@ -171,17 +171,19 @@ apartaments_dropdownbox.update()
 
 table_pessoas = ttk.Treeview(frame_bottom_right_right_top)
 set_scrollbar_table(table_pessoas, frame_bottom_right_right_top)
-table_pessoas['columns'] = ("nome", "apartamento", "data_nascimento", "status_morador")
+table_pessoas['columns'] = ("nome", "cpf", "data_nascimento", "apartamento", "status_morador")
 table_pessoas['show'] = 'headings'
 
-table_pessoas.column("nome", anchor="w", stretch=0, width = int(frame_bottom_right_left_top.winfo_width()*5/18))
-table_pessoas.column("apartamento", anchor="w", stretch=0, width = int(frame_bottom_right_left_top.winfo_width()*1/6))
-table_pessoas.column("data_nascimento", anchor="w", stretch=0, width = int(frame_bottom_right_left_top.winfo_width()*5/18))
-table_pessoas.column("status_morador", anchor="w", stretch=0, width = int(frame_bottom_right_left_top.winfo_width()*5/18))
+table_pessoas.column("nome", anchor="w", stretch=0, width = int(frame_bottom_right_left_top.winfo_width()/5))
+table_pessoas.column("cpf", anchor="w", stretch=0, width = int(frame_bottom_right_left_top.winfo_width()/5))
+table_pessoas.column("data_nascimento", anchor="w", stretch=0, width = int(2.5*frame_bottom_right_left_top.winfo_width()/10))
+table_pessoas.column("apartamento", anchor="w", stretch=0, width = int(frame_bottom_right_left_top.winfo_width()/10))
+table_pessoas.column("status_morador", anchor="w", stretch=0, width = int(frame_bottom_right_left_top.winfo_width()/5))
 
 table_pessoas.heading("nome",text="Nome", anchor="w")
-table_pessoas.heading("apartamento",text="Apto", anchor="w")
+table_pessoas.heading("cpf",text="CPF", anchor="w")
 table_pessoas.heading("data_nascimento",text="Data de nascimento", anchor="w")
+table_pessoas.heading("apartamento",text="Apto", anchor="w")
 table_pessoas.heading("status_morador",text="Status morador", anchor="w")
 
 table_pessoas.place(relx = 0, rely = 0, relheight=1, relwidth=1)
@@ -190,7 +192,7 @@ table_pessoas_rows = database.get_pessoas_columns()
 tipo_pessoa = {"morador":"Morador","responsavel":"Responsável"}
 
 for codigo, pessoa_info in table_pessoas_rows.items():
-    table_pessoas.insert(parent='', index='end', iid=codigo, values=(pessoa_info['nome'], pessoa_info['apartamento'], pessoa_info['data_nascimento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
+    table_pessoas.insert(parent='', index='end', iid=codigo, values=(pessoa_info['nome'], pessoa_info['cpf'], pessoa_info['data_nascimento'], pessoa_info['apartamento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
 
 pessoas = database.get_responsaveis()
 pessoa_responsavel_selected = tk.StringVar()
@@ -201,6 +203,9 @@ pessoas_dropdownbox = ttk.Combobox(frame_bottom_right_left_bottom,
                                          state="readonly")
 pessoas_dropdownbox.place(relx=.55, rely=0)
 pessoas_dropdownbox.update()
+
+open_gate = ttk.Button(frame_bottom_right_left_bottom, text="Abrir catraca", command=lambda: camera.send_high_esp)
+open_gate.place(relx = 0.35, rely = 0.3, relwidth = 0.3, relheight = 0.15)
 
 table_logs = ttk.Treeview(frame_bottom_right)
 set_scrollbar_table(table_logs, frame_bottom_right, 1)
@@ -226,6 +231,7 @@ def sort_logs(column):
                                                                 log_info['horario_passagem'],
                                                                 tipo_passagem[log_info['tipo_passagem']])
                                                                 )
+
 from PIL import Image, ImageTk
 with Image.open("arrows.png") as img:
     img_resized = img.resize((16, 16), resample=Image.BILINEAR)
@@ -239,7 +245,6 @@ table_logs.heading("passagem",text="Tipo de passagem", anchor="w", image=sorting
 
 table_logs.place(relx = 0, rely = .725, relheight=.275, relwidth=1)
 table_logs_rows = database.get_logs()
-
 tipo_passagem = {"entrada":"Entrada","saida":"Saída"}
 
 for id,(codigo, log_info) in enumerate(table_logs_rows.items()):
@@ -252,46 +257,63 @@ for id,(codigo, log_info) in enumerate(table_logs_rows.items()):
                             )
 
 def refresh_tables():
-    #Tabela apartamentos
-    table.delete(*table.get_children())
-    table_rows = database.get_table_columns()    
-    for id,(apto, apto_info) in enumerate(table_rows.items()):
-        if len(apto_info['moradores']) > 1:
-            table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
-            for id2,morador in enumerate(apto_info['moradores']):
-                if morador != apto_info['responsavel']:
-                    table.insert(parent=id, index='end', iid=f"c{id2}", values=('', morador, ''))
-        else:
-            table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
-    pessoas_dropdownbox_new = database.get_responsaveis()
-    pessoas_dropdownbox['values'] = list(pessoas_dropdownbox_new.keys())
+    try:
+        #Tabela apartamentos
+        table.delete(*table.get_children())
+        table_rows = database.get_table_columns()    
+        for id,(apto, apto_info) in enumerate(table_rows.items()):
+            if len(apto_info['moradores']) > 1:
+                table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
+                for id2,morador in enumerate(apto_info['moradores']):
+                    if morador != apto_info['responsavel']:
+                        table.insert(parent=id, index='end', iid=f"M-{id}-{id2}", values=('', morador, ''))
+            else:
+                table.insert(parent='', index='end', iid=id, values=(apto, apto_info['responsavel'], apto_info['placa']))
+        pessoas_dropdownbox_new = database.get_responsaveis()
+        pessoas_dropdownbox['values'] = list(pessoas_dropdownbox_new.keys())
 
-    #Tabela pessoas
-    table_pessoas.delete(*table_pessoas.get_children())
-    table_pessoas_rows = database.get_pessoas_columns()
-    for codigo, pessoa_info in table_pessoas_rows.items():
-        table_pessoas.insert(parent='', index='end', iid=codigo, values=(pessoa_info['nome'], pessoa_info['apartamento'], pessoa_info['data_nascimento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
-    
-    #Tabela logs
-    table_logs.delete(*table_logs.get_children())
-    table_logs_rows = database.get_logs()
-    for id,(codigo, log_info) in enumerate(table_logs_rows.items()):   
-        table_logs.insert(parent='', index='end', iid=id, values=(codigo,
-                                                               log_info['codigo_veiculo'],
-                                                               log_info['data_passagem'],
-                                                               log_info['horario_passagem'],
-                                                               tipo_passagem[log_info['tipo_passagem']])
-                                                               )
+        #Tabela pessoas
+        table_pessoas.delete(*table_pessoas.get_children())
+        table_pessoas_rows = database.get_pessoas_columns()
+        for codigo, pessoa_info in table_pessoas_rows.items():
+            table_pessoas.insert(parent='', index='end', iid=codigo, values=(pessoa_info['nome'], pessoa_info['cpf'], pessoa_info['data_nascimento'], pessoa_info['apartamento'], tipo_pessoa[pessoa_info['tipo_pessoa']]))
+        
+        #Tabela logs
+        table_logs.delete(*table_logs.get_children())
+        table_logs_rows = database.get_logs()
+        for id,(codigo, log_info) in enumerate(table_logs_rows.items()):   
+            table_logs.insert(parent='', index='end', iid=id, values=(codigo,
+                                                                log_info['codigo_veiculo'],
+                                                                log_info['data_passagem'],
+                                                                log_info['horario_passagem'],
+                                                                tipo_passagem[log_info['tipo_passagem']])
+                                                                )
+        
+        #camera
+        update_camera()
 
-    #camera
-    update_camera()
-
-    #graficos
-    change_graph(input_data.get())
+        #graficos
+        change_graph(input_data.get())
+    except Exception as e:
+        print(e)
+        show_popup("Erro ao atualizar tabelas", 400)
 
 def update_apartament():
-    database.update_apartament(apartament_selected.get(),pessoas[pessoa_responsavel_selected.get()])
+    mes, status = database.update_apartament(apartament_selected.get(),pessoas[pessoa_responsavel_selected.get()])
+    show_popup(mes,status)
     refresh_tables()
+
+def show_popup(mensagem, status):
+    popup = ttk.Label(frame_bottom, text=mensagem, anchor="center")
+    match status:
+        case 200:
+            popup.configure(background="green")
+        case 400:
+            popup.configure(background="yellow")
+        case 500:
+            popup.configure(background='red')
+    popup.place(relx=0.4, rely=0.8, relwidth=0.2, relheight=0.2)
+    popup.after(3000, popup.destroy)
 
 update_apartament_button = ttk.Button(frame_bottom_right_left_bottom, text="Atualizar apartamento",
                               command=update_apartament)
@@ -319,6 +341,11 @@ nascimento_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="Nascim
 nascimento_pessoa_label.place(relx=0, rely=.1, relwidth=0.2, relheight=0.1)
 nascimento = tkcalendar.DateEntry(frame_bottom_right_right_bottom, state='normal', date_pattern='dd/MM/yyyy')
 nascimento.place(relx=.2, rely=.1, relwidth=.3, relheight=0.1)
+
+cpf_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="CPF")
+cpf_pessoa_label.place(relx=0, rely=.2, relwidth=0.2, relheight=0.1)
+cpf = tk.Entry(frame_bottom_right_right_bottom)
+cpf.place(relx=.2, rely=.2, relwidth=.3, relheight=0.1)
 
 tipo_pessoa_label = tk.Label(frame_bottom_right_right_bottom, text="Status")
 tipo_pessoa_label.place(relx=.5, rely=.1, relwidth=0.2, relheight=0.1)
@@ -350,6 +377,7 @@ tipo_pessoa_dropdownbox.bind("<<ComboboxSelected>>",select_tipo_pessoa)
 tipo_pessoa_dropdownbox.place(relx=.7, rely=.1, relwidth=.3, relheight=0.1)
 tipo_pessoa_dropdownbox.update()
 
+table_iid = None
 def select_row_pessoas(event):
     if is_to_create or len(event.widget.selection()) == 0:
         return None
@@ -358,10 +386,10 @@ def select_row_pessoas(event):
     row = table_pessoas.item(table_iid)['values']
     nome_pessoa.delete(0,tk.END)
     nome_pessoa.insert(0,row[0])
-    apartaments_pessoa_dropdownbox.current(row[1])
+    apartaments_pessoa_dropdownbox.current(row[3])
     nascimento.set_date(row[2])
-    tipo_pessoa_dropdownbox.current(next(i for i,res in enumerate(tipo_pessoa) if tipo_pessoa[res] == row[3]))
-    select_tipo_pessoa(None, row[3])
+    tipo_pessoa_dropdownbox.current(next(i for i,res in enumerate(tipo_pessoa) if tipo_pessoa[res] == row[4]))
+    select_tipo_pessoa(None, row[4])
     if row[3] == "Responsável":
         pessoa_codigo = database.select(f"select codigo from pessoas where codigo = '{table_iid}'")
         placa_entry.delete(0, tk.END)
@@ -372,9 +400,11 @@ table_pessoas.bind('<<TreeviewSelect>>', select_row_pessoas)
 def create_pessoa():
     global table_iid
     if is_to_create:
-        database.create_pessoa((nome_pessoa.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get()), placa_entry.get()) )
-    else:        
-        database.update_pessoa(str(table_iid),nome_pessoa.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get()), placa_entry.get())
+        mes,status = database.create_pessoa((nome_pessoa.get(), cpf.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get()), placa_entry.get()) )
+    else:
+        mes, status = database.update_pessoa(str(table_iid),nome_pessoa.get(), cpf.get(), apartament_pessoa_selected.get(), nascimento.get_date(), next(chave for chave,valor in tipo_pessoa.items() if valor == pessoa_selected.get()), placa_entry.get())
+
+    show_popup(mes, status)
     refresh_tables()
 
 save_selected = tk.StringVar()
@@ -383,9 +413,23 @@ is_to_create = True
 def set_is_to_create(val):
     global is_to_create
     is_to_create = val
+    if not is_to_create:
+        delete_person.place(relx=.4, rely=.45, relwidth=.3, relheight=0.15)
+    else:
+        delete_person.place_forget()
+
+def delete_pessoa():
+    global table_iid
+    if table_iid:
+        mes, status = database.delete_pessoa(table_iid)
+        refresh_tables()
+        show_popup(mes, status)
+    else:
+        show_popup("Selecione uma pessoa.", 400)
 
 save_option1 = ttk.Radiobutton(frame_bottom_right_right_bottom, text = "Cadastrar", value = "create", variable = save_selected, command=lambda: set_is_to_create(True), takefocus=False)
 save_option2 = ttk.Radiobutton(frame_bottom_right_right_bottom, text = "Editar", value = "update", variable = save_selected, command=lambda: set_is_to_create(False), takefocus=False)
+delete_person = ttk.Button(frame_bottom_right_right_bottom, text="Excluir", command=delete_pessoa)
 
 save_option1.place(relx = 0.1, rely = 0.3, relwidth = 0.3, relheight = 0.15)
 save_option2.place(relx = 0.4, rely = 0.3, relwidth = 0.3, relheight = 0.15)
