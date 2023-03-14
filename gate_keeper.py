@@ -204,9 +204,6 @@ pessoas_dropdownbox = ttk.Combobox(frame_bottom_right_left_bottom,
 pessoas_dropdownbox.place(relx=.55, rely=0)
 pessoas_dropdownbox.update()
 
-open_gate = ttk.Button(frame_bottom_right_left_bottom, text="Abrir catraca", command=lambda: camera.send_high_esp)
-open_gate.place(relx = 0.35, rely = 0.3, relwidth = 0.3, relheight = 0.15)
-
 table_logs = ttk.Treeview(frame_bottom_right)
 set_scrollbar_table(table_logs, frame_bottom_right, 1)
 table_logs['columns'] = ("codigo", "codigo_veiculo", "data_passagem","horario_passagem", "passagem")
@@ -448,6 +445,9 @@ label.update()
 
 camera = Camera(janela, database, label, refresh_tables)
 label.after(0, camera.show_frame)
+
+open_gate = ttk.Button(frame_bottom_right_left_bottom, text="Abrir catraca", command=camera.send_high_esp)
+open_gate.place(relx = 0.35, rely = 0.3, relwidth = 0.3, relheight = 0.15)
 
 def update_camera():
     camera.update_camera_database()

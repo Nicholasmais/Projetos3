@@ -14,16 +14,15 @@ class Camera():
         self.function_refresh_tables = function_refresh_tables
         #https://github.com/UB-Mannheim/tesseract/wiki
         pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-        self.capture = cv2.VideoCapture(0)
-        #self.esp32 = serial.Serial("COM5", 9600)
+        self.capture = cv2.VideoCapture(1)
+        self.esp32 = serial.Serial("COM5", 9600)
 
-        self.min_width, self.max_width = 75, 200
-        self.min_height, self.max_height = 30,60
-        self.plate_ratio = 150/70
-        self.marg = 10
+        self.min_width, self.max_width = 170, 350
+        self.min_height, self.max_height = 50,190
+        self.plate_ratio = 343/180
+        self.marg = 5
 
     def send_high_esp(self):
-        return None
         self.esp32.write(b"1")
 
     def update_camera_database(self):
@@ -59,7 +58,7 @@ class Camera():
         color_gray_frame = cv2.cvtColor(gray_frame, cv2.COLOR_GRAY2BGR)#para os retangulo coloridos na imagem cinza
         # desenhar retângulos na imagem
         
-        if False:
+        if True:
             for i, rectangle in enumerate(rectangles):            
                 # obter as coordenadas do retângulo
                 x, y, w, h = cv2.boundingRect(rectangle)
@@ -70,7 +69,7 @@ class Camera():
                 text = pytesseract.image_to_string(cropped_image).strip()
 
                 # Insere o texto correspondente a cada retângulo
-                texto = f"texto = {text} width = {w} height = {h}"
+                texto = f"{text}"
                 cv2.putText(color_gray_frame, texto, (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor, 2)
             
                 if text in self.placas_cadastradas:     
@@ -89,7 +88,7 @@ class Camera():
                     self.database.insert(sql, val)
                     self.function_refresh_tables()
 
-                    for tempo in (range(3,0,-1)):
+                    for tempo in (range(5,0,-1)):
                         cv2.rectangle(color_gray_frame, (0, 0), (300, 150), (0,0,0), -1)
                         cv2.putText(color_gray_frame, entrada, (50,120), cv2.FONT_HERSHEY_SIMPLEX, .5,(255,255,255), 1)
                         cv2.putText(color_gray_frame, f"Aguarde {tempo}s", (50,100), cv2.FONT_HERSHEY_SIMPLEX, .5,(255,255,255), 1)
